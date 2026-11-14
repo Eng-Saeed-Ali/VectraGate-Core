@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="1200" height="680">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090D16"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <marker id="arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#38BDF8"/>
+    </marker>
+    <marker id="arrow-emerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#10B981"/>
+    </marker>
+    <marker id="arrow-gold" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#F59E0B"/>
+    </marker>
+    <marker id="arrow-coral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#F43F5E"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="680" fill="url(#bg-grad)"/>
+
+  <rect x="30" y="20" width="1140" height="66" rx="10" fill="#111827" stroke="#38BDF8" stroke-width="1.5"/>
+  <text x="600" y="48" text-anchor="middle" fill="#F8FAFC" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700">VectraGate-Core System Architecture Pipeline</text>
+  <text x="600" y="72" text-anchor="middle" fill="#94A3B8" font-family="Consolas, monospace" font-size="13">Deterministic OT Firewall &amp; SIEM Audit Plane</text>
+
+  <!-- Column 1: Intake Gate -->
+  <rect x="30" y="110" width="290" height="440" rx="12" fill="#0F172A" stroke="#38BDF8" stroke-width="2"/>
+  <rect x="30" y="110" width="290" height="40" rx="12" fill="#1E293B"/>
+  <text x="175" y="135" text-anchor="middle" fill="#38BDF8" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700">1. Boundary Intake Gate (F7)</text>
+
+  <rect x="48" y="170" width="254" height="64" rx="8" fill="#172554" stroke="#38BDF8" stroke-width="1"/>
+  <text x="60" y="194" fill="#E0F2FE" font-family="Consolas, monospace" font-size="12" font-weight="700">Stage 1: UTF-8 &amp; Size Gate</text>
+  <text x="60" y="216" fill="#93C5FD" font-family="Consolas, monospace" font-size="11">&lt;= 4 MiB, 0 NUL, 0 Surrogates</text>
+
+  <rect x="48" y="250" width="254" height="64" rx="8" fill="#172554" stroke="#38BDF8" stroke-width="1"/>
+  <text x="60" y="274" fill="#E0F2FE" font-family="Consolas, monospace" font-size="12" font-weight="700">Stage 2: Depth Scanner</text>
+  <text x="60" y="296" fill="#93C5FD" font-family="Consolas, monospace" font-size="11">Iterative Scan Depth &lt;= 8</text>
+
+  <rect x="48" y="330" width="254" height="64" rx="8" fill="#172554" stroke="#38BDF8" stroke-width="1"/>
+  <text x="60" y="354" fill="#E0F2FE" font-family="Consolas, monospace" font-size="12" font-weight="700">Stage 3: Zero-Float Parse</text>
+  <text x="60" y="376" fill="#93C5FD" font-family="Consolas, monospace" font-size="11">Closed-World Keys &amp; DAG Acyclic</text>
+
+  <rect x="48" y="410" width="254" height="64" rx="8" fill="#172554" stroke="#38BDF8" stroke-width="1"/>
+  <text x="60" y="434" fill="#E0F2FE" font-family="Consolas, monospace" font-size="12" font-weight="700">Stage 4: Packet Quarantine</text>
+  <text x="60" y="456" fill="#93C5FD" font-family="Consolas, monospace" font-size="11">Isolate Invalid PacketRejection</text>
+
+  <rect x="48" y="490" width="254" height="42" rx="8" fill="#0B1120" stroke="#475569" stroke-width="1"/>
+  <text x="175" y="516" text-anchor="middle" fill="#CBD5E1" font-family="Consolas, monospace" font-size="11">Schema: vectragate.bundle/v1</text>
+
+  <!-- Column 2 Top: C++ Native Core -->
+  <rect x="380" y="110" width="420" height="210" rx="12" fill="#0F172A" stroke="#10B981" stroke-width="2"/>
+  <rect x="380" y="110" width="420" height="38" rx="12" fill="#064E3B"/>
+  <text x="590" y="134" text-anchor="middle" fill="#D1FAE5" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700">2A. C++17/20 Native Core (vectragate_core.hpp)</text>
+
+  <text x="400" y="172" fill="#A7F3D0" font-family="Consolas, monospace" font-size="12">- alignas(64) Static EngineArena</text>
+  <text x="400" y="196" fill="#A7F3D0" font-family="Consolas, monospace" font-size="12">- Wait-Free 256-Slot SPSC Ring Buffer</text>
+  <text x="400" y="220" fill="#A7F3D0" font-family="Consolas, monospace" font-size="12">- Isolated write_idx / read_idx Cache</text>
+  <text x="400" y="244" fill="#A7F3D0" font-family="Consolas, monospace" font-size="12">- Zero Heap (new/malloc/free = 0)</text>
+  <text x="400" y="268" fill="#A7F3D0" font-family="Consolas, monospace" font-size="12">- Multi-Block RFC 7693 BLAKE2b-64</text>
+  <text x="400" y="294" fill="#6EE7B7" font-family="Consolas, monospace" font-size="11">g++ -std=c++17 -O3 -Wall -Wextra -Werror</text>
+
+  <!-- Column 2 Bottom: Python Core -->
+  <rect x="380" y="348" width="420" height="202" rx="12" fill="#0F172A" stroke="#38BDF8" stroke-width="2"/>
+  <rect x="380" y="348" width="420" height="38" rx="12" fill="#1E293B"/>
+  <text x="590" y="372" text-anchor="middle" fill="#38BDF8" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700">2B. Python Functional Core (Layers 0-2)</text>
+
+  <text x="400" y="408" fill="#E2E8F0" font-family="Consolas, monospace" font-size="12">- models.py: 8 Frozen Slot Dataclasses</text>
+  <text x="400" y="432" fill="#E2E8F0" font-family="Consolas, monospace" font-size="12">- protocol.py: Modbus TCP &amp; MQTT Parse</text>
+  <text x="400" y="456" fill="#E2E8F0" font-family="Consolas, monospace" font-size="12">- dag_engine.py: Kahn Sort + Bitwise DAG</text>
+  <text x="400" y="480" fill="#E2E8F0" font-family="Consolas, monospace" font-size="12">- firewall.py: Nygard + Fencing + Chain</text>
+  <text x="400" y="504" fill="#E2E8F0" font-family="Consolas, monospace" font-size="12">- cpp_bridge.py: Subprocess Wire Parity</text>
+  <text x="400" y="530" fill="#7DD3FC" font-family="Consolas, monospace" font-size="11">Exact 64-bit Integers (Zero Float / Div)</text>
+
+  <!-- Column 3 Top: Exporters -->
+  <rect x="860" y="110" width="310" height="210" rx="12" fill="#0F172A" stroke="#F59E0B" stroke-width="2"/>
+  <rect x="860" y="110" width="310" height="38" rx="12" fill="#451A03"/>
+  <text x="1015" y="134" text-anchor="middle" fill="#FDE68A" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700">3. Exporters &amp; DuckDB (F8)</text>
+
+  <text x="878" y="172" fill="#FEF3C7" font-family="Consolas, monospace" font-size="12">- NFKC + Strip CWE-1236 Shield</text>
+  <text x="878" y="196" fill="#FEF3C7" font-family="Consolas, monospace" font-size="12">- Big-4 Styled 4-Sheet .xlsx</text>
+  <text x="878" y="220" fill="#FEF3C7" font-family="Consolas, monospace" font-size="12">- Live =SUM(...) Emerald Totals</text>
+  <text x="878" y="244" fill="#FEF3C7" font-family="Consolas, monospace" font-size="12">- Atomic .tmp_ + fsync + replace</text>
+  <text x="878" y="268" fill="#FEF3C7" font-family="Consolas, monospace" font-size="12">- DuckDB 2.0 SIEM SQL Views</text>
+  <text x="878" y="294" fill="#FCD34D" font-family="Consolas, monospace" font-size="11">v_siem_threat_summary / v_interlock</text>
+
+  <!-- Column 3 Bottom: CLI & Governance -->
+  <rect x="860" y="348" width="310" height="202" rx="12" fill="#0F172A" stroke="#F43F5E" stroke-width="2"/>
+  <rect x="860" y="348" width="310" height="38" rx="12" fill="#4C0519"/>
+  <text x="1015" y="372" text-anchor="middle" fill="#FECDD3" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700">4. CLI &amp; FF-1..FF-9 Audit</text>
+
+  <text x="878" y="408" fill="#FFE4E6" font-family="Consolas, monospace" font-size="12">- 14-Packet Boiler/Gas OT Demo</text>
+  <text x="878" y="432" fill="#FFE4E6" font-family="Consolas, monospace" font-size="12">- Independent tests/_oracle.py</text>
+  <text x="878" y="456" fill="#FFE4E6" font-family="Consolas, monospace" font-size="12">- 1,050-Seed 3-Way Differential</text>
+  <text x="878" y="480" fill="#FFE4E6" font-family="Consolas, monospace" font-size="12">- &lt;=60 LOC &amp; &gt;=2 Asserts / Fn</text>
+  <text x="878" y="504" fill="#FFE4E6" font-family="Consolas, monospace" font-size="12">- 0 Recursion / 0 open() Calls</text>
+  <text x="878" y="530" fill="#FDA4AF" font-family="Consolas, monospace" font-size="11">Ruff + Ty Static Cleanliness</text>
+
+  <!-- Connectors using all 4 markers -->
+  <path d="M 320 260 L 374 215" fill="none" stroke="#38BDF8" stroke-width="2.5" marker-end="url(#arrow-cyan)"/>
+  <path d="M 320 390 L 374 435" fill="none" stroke="#38BDF8" stroke-width="2.5" marker-end="url(#arrow-cyan)"/>
+  <path d="M 555 320 L 555 344" fill="none" stroke="#10B981" stroke-width="2.5" marker-end="url(#arrow-emerald)"/>
+  <path d="M 625 348 L 625 324" fill="none" stroke="#10B981" stroke-width="2.5" marker-end="url(#arrow-emerald)"/>
+  <path d="M 800 410 L 854 240" fill="none" stroke="#F59E0B" stroke-width="2.5" marker-end="url(#arrow-gold)"/>
+  <path d="M 800 460 L 854 460" fill="none" stroke="#F43F5E" stroke-width="2.5" marker-end="url(#arrow-coral)"/>
+
+  <!-- Footer Banner -->
+  <rect x="30" y="576" width="1140" height="74" rx="10" fill="#0B1120" stroke="#334155" stroke-width="1.5"/>
+  <text x="600" y="608" text-anchor="middle" fill="#10B981" font-family="Consolas, monospace" font-size="14" font-weight="700">100% Parity: C++ == Python == Oracle</text>
+  <text x="600" y="632" text-anchor="middle" fill="#94A3B8" font-family="Consolas, monospace" font-size="12">GENESIS 0x5645435452413236 (VECTRA26)</text>
+</svg>

@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="1200" height="680">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090D16"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <marker id="arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#38BDF8"/>
+    </marker>
+    <marker id="arrow-emerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#10B981"/>
+    </marker>
+    <marker id="arrow-gold" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#F59E0B"/>
+    </marker>
+    <marker id="arrow-coral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#F43F5E"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="680" fill="url(#bg-grad)"/>
+
+  <rect x="30" y="20" width="1140" height="66" rx="10" fill="#111827" stroke="#38BDF8" stroke-width="1.5"/>
+  <text x="600" y="48" text-anchor="middle" fill="#F8FAFC" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700">Protocol Anatomy, DAG &amp; Circuit Breaker</text>
+  <text x="600" y="72" text-anchor="middle" fill="#94A3B8" font-family="Consolas, monospace" font-size="13">CVE Defenses, Trial Writes &amp; Audit Chain</text>
+
+  <!-- Panel A: Wire Decoders -->
+  <rect x="30" y="108" width="350" height="542" rx="12" fill="#0F172A" stroke="#38BDF8" stroke-width="2"/>
+  <rect x="30" y="108" width="350" height="38" rx="12" fill="#1E293B"/>
+  <text x="205" y="132" text-anchor="middle" fill="#38BDF8" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700">Panel A: Wire Decoders &amp; CVEs</text>
+
+  <rect x="48" y="164" width="314" height="218" rx="8" fill="#172554" stroke="#38BDF8" stroke-width="1.2"/>
+  <text x="62" y="188" fill="#E0F2FE" font-family="Consolas, monospace" font-size="12" font-weight="700">Modbus TCP MBAP (F2 + EC-A)</text>
+  <text x="62" y="214" fill="#BAE6FD" font-family="Consolas, monospace" font-size="11">MBAP: TxID|Proto=0|Len|Unit|FC</text>
+  <text x="62" y="238" fill="#BAE6FD" font-family="Consolas, monospace" font-size="11">Underflow: 2 &lt;= mbap_len &lt;= 254</text>
+  <text x="62" y="262" fill="#BAE6FD" font-family="Consolas, monospace" font-size="11">ADU Cap: 6 + mbap_len &lt;= 260</text>
+  <text x="62" y="286" fill="#BAE6FD" font-family="Consolas, monospace" font-size="11">FC Allowed: 0x03 0x05 0x06 0x10</text>
+  <text x="62" y="310" fill="#FDE68A" font-family="Consolas, monospace" font-size="11">Blocks CVE-2026-54410 Overflow</text>
+  <text x="62" y="334" fill="#93C5FD" font-family="Consolas, monospace" font-size="11">Coil Mask: 0x0000 or 0xFF00 Only</text>
+  <text x="62" y="358" fill="#93C5FD" font-family="Consolas, monospace" font-size="11">Emits 8 Strict Priority Codes</text>
+
+  <rect x="48" y="402" width="314" height="228" rx="8" fill="#172554" stroke="#38BDF8" stroke-width="1.2"/>
+  <text x="62" y="426" fill="#E0F2FE" font-family="Consolas, monospace" font-size="12" font-weight="700">MQTT v3.1.1 PUBLISH (F3 + EC-B)</text>
+  <text x="62" y="452" fill="#BAE6FD" font-family="Consolas, monospace" font-size="11">Header: Type=3 &amp; QoS != 3</text>
+  <text x="62" y="476" fill="#BAE6FD" font-family="Consolas, monospace" font-size="11">Varint: 1..4B Strict Minimal</text>
+  <text x="62" y="500" fill="#FDE68A" font-family="Consolas, monospace" font-size="11">Blocks CVE-2026-21888 Varint</text>
+  <text x="62" y="524" fill="#FDE68A" font-family="Consolas, monospace" font-size="11">Blocks CVE-2026-25627 Framing</text>
+  <text x="62" y="548" fill="#93C5FD" font-family="Consolas, monospace" font-size="11">Rejects Wildcards: NUL, +, #</text>
+  <text x="62" y="572" fill="#93C5FD" font-family="Consolas, monospace" font-size="11">Payload: ASCII SET or 6B I32</text>
+  <text x="62" y="596" fill="#93C5FD" font-family="Consolas, monospace" font-size="11">Emits 10 Strict Priority Codes</text>
+
+  <!-- Panel B: Kahn DAG Interlock -->
+  <rect x="425" y="108" width="350" height="542" rx="12" fill="#0F172A" stroke="#10B981" stroke-width="2"/>
+  <rect x="425" y="108" width="350" height="38" rx="12" fill="#064E3B"/>
+  <text x="600" y="132" text-anchor="middle" fill="#D1FAE5" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700">Panel B: Interlock Logic DAG</text>
+
+  <rect x="443" y="164" width="314" height="82" rx="8" fill="#022C22" stroke="#10B981" stroke-width="1.2"/>
+  <text x="457" y="188" fill="#D1FAE5" font-family="Consolas, monospace" font-size="12" font-weight="700">Kahn Iterative Sort (EC-C)</text>
+  <text x="457" y="210" fill="#A7F3D0" font-family="Consolas, monospace" font-size="11">0 Recursion, Ascending node_id</text>
+  <text x="457" y="232" fill="#A7F3D0" font-family="Consolas, monospace" font-size="11">Cycle Check -&gt; Raise ValueError</text>
+
+  <!-- DAG Visual Nodes -->
+  <rect x="443" y="266" width="94" height="52" rx="6" fill="#1E293B" stroke="#38BDF8" stroke-width="1.2"/>
+  <text x="490" y="288" text-anchor="middle" fill="#E0F2FE" font-family="Consolas, monospace" font-size="11">N0: TEMP&gt;800</text>
+  <text x="490" y="306" text-anchor="middle" fill="#38BDF8" font-family="Consolas, monospace" font-size="10">CMP_GT</text>
+
+  <rect x="553" y="266" width="94" height="52" rx="6" fill="#1E293B" stroke="#38BDF8" stroke-width="1.2"/>
+  <text x="600" y="288" text-anchor="middle" fill="#E0F2FE" font-family="Consolas, monospace" font-size="11">N1: PUMP=0</text>
+  <text x="600" y="306" text-anchor="middle" fill="#38BDF8" font-family="Consolas, monospace" font-size="10">CMP_EQ</text>
+
+  <rect x="663" y="266" width="94" height="52" rx="6" fill="#1E293B" stroke="#38BDF8" stroke-width="1.2"/>
+  <text x="710" y="288" text-anchor="middle" fill="#E0F2FE" font-family="Consolas, monospace" font-size="11">N2: GAS=1</text>
+  <text x="710" y="306" text-anchor="middle" fill="#38BDF8" font-family="Consolas, monospace" font-size="10">CMP_EQ</text>
+
+  <rect x="496" y="352" width="124" height="44" rx="6" fill="#1E293B" stroke="#10B981" stroke-width="1.2"/>
+  <text x="558" y="378" text-anchor="middle" fill="#6EE7B7" font-family="Consolas, monospace" font-size="11">N3: AND (N0, N1)</text>
+
+  <rect x="530" y="426" width="194" height="48" rx="6" fill="#4C0519" stroke="#F43F5E" stroke-width="1.5"/>
+  <text x="627" y="454" text-anchor="middle" fill="#FECDD3" font-family="Consolas, monospace" font-size="11" font-weight="700">N4: HAZARD AND (N3, N2)</text>
+
+  <path d="M 490 318 L 535 348" fill="none" stroke="#38BDF8" stroke-width="2" marker-end="url(#arrow-cyan)"/>
+  <path d="M 600 318 L 575 348" fill="none" stroke="#38BDF8" stroke-width="2" marker-end="url(#arrow-cyan)"/>
+  <path d="M 558 396 L 595 422" fill="none" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-emerald)"/>
+  <path d="M 710 318 L 665 422" fill="none" stroke="#F43F5E" stroke-width="2" marker-end="url(#arrow-coral)"/>
+
+  <rect x="443" y="492" width="314" height="138" rx="8" fill="#022C22" stroke="#10B981" stroke-width="1.2"/>
+  <text x="457" y="516" fill="#D1FAE5" font-family="Consolas, monospace" font-size="12" font-weight="700">Atomic Trial-Write Rollback (F4)</text>
+  <text x="457" y="540" fill="#A7F3D0" font-family="Consolas, monospace" font-size="11">1. Copy live_regs -&gt; scratch</text>
+  <text x="457" y="562" fill="#A7F3D0" font-family="Consolas, monospace" font-size="11">2. Apply writes on scratch only</text>
+  <text x="457" y="584" fill="#FDA4AF" font-family="Consolas, monospace" font-size="11">3. Hazard=1 -&gt; INTERLOCK_TRIPPED</text>
+  <text x="457" y="606" fill="#6EE7B7" font-family="Consolas, monospace" font-size="11">4. Safe=0 -&gt; Commit live_regs</text>
+
+  <!-- Panel C: Security State Machine & Chain -->
+  <rect x="820" y="108" width="350" height="542" rx="12" fill="#0F172A" stroke="#F59E0B" stroke-width="2"/>
+  <rect x="820" y="108" width="350" height="38" rx="12" fill="#451A03"/>
+  <text x="995" y="132" text-anchor="middle" fill="#FDE68A" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700">Panel C: Breaker, Fencing, Chain</text>
+
+  <rect x="838" y="164" width="314" height="96" rx="8" fill="#1E293B" stroke="#F59E0B" stroke-width="1.2"/>
+  <text x="852" y="188" fill="#FDE68A" font-family="Consolas, monospace" font-size="12" font-weight="700">Fencing &amp; Rate Window (F5)</text>
+  <text x="852" y="212" fill="#FEF3C7" font-family="Consolas, monospace" font-size="11">seq_no &lt;= last_seq -&gt; REPLAY</text>
+  <text x="852" y="236" fill="#FEF3C7" font-family="Consolas, monospace" font-size="11">Evict &lt; t-win; cnt &gt;= max</text>
+
+  <rect x="838" y="278" width="314" height="214" rx="8" fill="#1E293B" stroke="#F43F5E" stroke-width="1.2"/>
+  <text x="852" y="302" fill="#FECDD3" font-family="Consolas, monospace" font-size="12" font-weight="700">Nygard 3-State Circuit Breaker</text>
+
+  <rect x="856" y="324" width="84" height="34" rx="6" fill="#064E3B" stroke="#10B981" stroke-width="1.5"/>
+  <text x="898" y="346" text-anchor="middle" fill="#D1FAE5" font-family="Consolas, monospace" font-size="11" font-weight="700">CLOSED</text>
+
+  <rect x="1044" y="324" width="88" height="34" rx="6" fill="#4C0519" stroke="#F43F5E" stroke-width="1.5"/>
+  <text x="1088" y="346" text-anchor="middle" fill="#FECDD3" font-family="Consolas, monospace" font-size="11" font-weight="700">OPEN</text>
+
+  <rect x="944" y="402" width="102" height="34" rx="6" fill="#451A03" stroke="#F59E0B" stroke-width="1.5"/>
+  <text x="995" y="424" text-anchor="middle" fill="#FDE68A" font-family="Consolas, monospace" font-size="11" font-weight="700">HALF_OPEN</text>
+
+  <path d="M 940 341 L 1038 341" fill="none" stroke="#F43F5E" stroke-width="2" marker-end="url(#arrow-coral)"/>
+  <path d="M 1076 358 L 1036 398" fill="none" stroke="#F59E0B" stroke-width="2" marker-end="url(#arrow-gold)"/>
+  <path d="M 1020 398 L 1060 358" fill="none" stroke="#F43F5E" stroke-width="2" marker-end="url(#arrow-coral)"/>
+  <path d="M 952 398 L 912 358" fill="none" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-emerald)"/>
+
+  <text x="852" y="458" fill="#E2E8F0" font-family="Consolas, monospace" font-size="11">OPEN: Fail-fast &lt; 1us cooldown</text>
+  <text x="852" y="478" fill="#E2E8F0" font-family="Consolas, monospace" font-size="11">Probe ALLOW-&gt;CLOSED | FAIL-&gt;OPEN</text>
+
+  <rect x="838" y="510" width="314" height="120" rx="8" fill="#0B1120" stroke="#38BDF8" stroke-width="1.2"/>
+  <text x="852" y="534" fill="#E0F2FE" font-family="Consolas, monospace" font-size="12" font-weight="700">BLAKE2b-64 Audit Chain (F6)</text>
+  <text x="852" y="560" fill="#7DD3FC" font-family="Consolas, monospace" font-size="11">Genesis: 0x5645435452413236</text>
+  <text x="852" y="584" fill="#7DD3FC" font-family="Consolas, monospace" font-size="11">Multi-Block RFC 7693 Digest</text>
+  <text x="852" y="608" fill="#7DD3FC" font-family="Consolas, monospace" font-size="11">Tamper-Evident Verdict Chain</text>
+
+  <!-- Cross-Panel Connectors -->
+  <path d="M 380 340 L 420 340" fill="none" stroke="#38BDF8" stroke-width="2.5" marker-end="url(#arrow-cyan)"/>
+  <path d="M 775 340 L 815 340" fill="none" stroke="#10B981" stroke-width="2.5" marker-end="url(#arrow-emerald)"/>
+</svg>

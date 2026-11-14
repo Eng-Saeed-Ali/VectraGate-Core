@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C++ compiled binaries and build artifacts
+*.exe
+*.o
+*.obj
+*.out
+build/
+dist/
+*.egg-info/
+
+# Test, coverage & hypothesis caches
+.pytest_cache/
+.hypothesis/
+.coverage
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+
+# Atomic temporary files & generated workbooks
+.tmp_*
+*.xlsx
+*.duckdb
+*.duckdb.wal
