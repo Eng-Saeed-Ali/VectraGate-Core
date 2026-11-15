@@ -12,7 +12,7 @@
 
 **Deterministic C++17/20 & Python OT/ICS Protocol Firewall, Logic-Gate DAG Interlock Engine & Cryptographic Audit Ledger**
 
-`VectraGate-Core (بَرْزَخ)` is an industrial operational-technology (OT) and industrial control system (ICS) protocol firewall that inspects **Modbus TCP** and **MQTT v3.1.1 / v5.0** command frames before they reach physical Programmable Logic Controllers (PLCs). Every write command is evaluated on a scratchpad register copy through a topologically sorted **Logic-Gate DAG Interlock Engine**, guarded by **Kleppmann monotonic fencing tokens**, a **fixed-window integer rate limiter**, and a **Nygard 3-state circuit breaker**, and sealed into a tamper-evident **RFC 7693 `BLAKE2b-64` hash chain**.
+`VectraGate-Core (بَرْزَخ)` is an industrial operational-technology (OT) and industrial control system (ICS) protocol firewall that inspects **Modbus TCP** and **MQTT v3.1.1** command frames before they reach physical Programmable Logic Controllers (PLCs). Every write command is evaluated on a scratchpad register copy through a topologically sorted **Logic-Gate DAG Interlock Engine**, guarded by **Kleppmann monotonic fencing tokens**, a **sliding-window integer rate limiter**, and a **Nygard 3-state circuit breaker**, and sealed into a tamper-evident **RFC 7693 `BLAKE2b-64` hash chain**.
 
 ---
 
@@ -20,17 +20,28 @@
 
 ![VectraGate-Core 4-Layer Architecture & 64-Byte Cache-Aligned Pipeline](assets/architecture_pipeline.svg)
 
-- **Layer 1 (`src/vectragate/models.py`):** Immutable domain contracts (`frozen=True, slots=True`), 64-bit integer register ranges (`[-1_000_000_000_000, 1_000_000_000_000]`), and `18` deterministic `VerdictCode` values.
-- **Layer 2A (`src/cpp/vectragate_core.hpp`, `src/cpp/vectragate_cli.cpp`):** Header-only C++17/20 engine featuring `alignas(64)` cache-line structures (`PacketDescriptor` = `64B`, `DagNode` = `64B`, `VerdictRecord` = `64B`), a lock-free `SpscRingBuffer<PacketDescriptor, 256>` exercised in 256-slot batches (with `--selftest-spsc` verification), and branchless bitwise DAG evaluation (`-(int64_t)(cond)`).
+- **Layer 1 (`src/vectragate/models.py`):** Immutable domain contracts (`@dataclass(slots=True, frozen=True)` across `8` dataclasses), 64-bit integer register ranges bounded to **`[-32_768, 65_535]` (`MIN_REG_VAL .. MAX_REG_VAL`)**, and **`24` deterministic `VerdictCode` values**.
+- **Layer 2A (`src/cpp/vectragate_core.hpp`, `src/cpp/vectragate_cli.cpp`):** Header-only C++17/20 engine featuring `alignas(64)` cache-line structures (`EngineArena`, `DagNodePod`, `SourceSecurityPod`, `PacketEventPod`, `SpscRingBuffer`), a wait-free 256-slot `SpscRingBuffer` exercised in 256-packet batches (with `--selftest-spsc` verification), and branchless bitwise DAG evaluation (`-(int64_t)(cond)`).
 - **Layer 2B (`protocol.py`, `dag_engine.py`, `firewall.py`):** Pure-integer Python reference core with bit-for-bit parity against the native C++17/20 binary and independent oracle (`tests/_oracle.py`).
-- **Layer 3 (`intake_gate.py`, `cpp_bridge.py`):** Pre-engine JSON/CSV intake validation gate with atomic `.tmp_` + `os.fsync` + `os.replace` dead-letter reporting and subprocess C++ parity verification.
-- **Layer 4 (`exporters.py`, `cli_visualizer.py`):** In-memory **DuckDB 2.0** `BIGINT` SIEM SQL analytics, multi-sheet **Excel (`.xlsx`)** executive reports with live `=SUM(...)` formulas and zero empty cells, **SQLite WAL** ledger persistence, and **Rich** terminal visualization.
+- **Layer 3 (`intake_gate.py`, `cpp_bridge.py`):** 4-stage `vectragate.bundle/v1` JSON boundary validation gate (`<= 4 MiB`, iterative nesting depth `<= 8`, zero-float enforcement, and per-packet `PacketRejection` quarantine) and subprocess C++17/20 parity bridge.
+- **Layer 4 (`exporters.py`, `cli_visualizer.py`):** In-memory **DuckDB 2.0** `BIGINT` SIEM SQL views (`v_siem_threat_summary`, `v_interlock_trips`), Big-4 styled **Excel (`.xlsx`)** workbooks with live `=SUM(...)` formulas across all 4 sheets (`0` `None` cells, OWASP 2026 `CWE-1236` shield, atomic `.tmp_` + `os.fsync` + `os.replace`), and a 100% pure Python stdlib Unicode/ASCII CLI visualizer.
 
 ---
 
 ## 2. Protocol Inspection, DAG Interlock & Nygard Circuit Breaker
 
 ![Protocol Inspection, Kahn DAG Interlock & Nygard 3-State Circuit Breaker](assets/protocol_dag_interlock.svg)
+
+### 2.1 Security & CVE Defense Matrix
+
+| Threat / Vulnerability Class | Attack Vector & Wire Anomaly | Deterministic Defense & `VerdictCode` |
+| :--- | :--- | :--- |
+| **`CVE-2026-54410` (Modbus ADU Overflow & Underflow)** | Crafted MBAP length `mbap_len < 2` (unsigned underflow of `mbap_len - 2`) or `mbap_len > 254` (ADU buffer overflow `> 260` bytes) | Rejects with `MODBUS_LENGTH_OUT_OF_BOUNDS` before PDU allocation; enforces exact `len(raw) == 6 + mbap_len` (`MODBUS_MBAP_LEN_MISMATCH`) |
+| **Modbus Coil & Byte-Count Desynchronization** | Non-canonical `FC 0x05` coil payload (`∉ {0x0000, 0xFF00}`) or `FC 0x10` `byte_count ≠ 2 * reg_count` | Rejects with `MODBUS_INVALID_COIL_VALUE` or `MODBUS_BYTE_COUNT_MISMATCH`; bounds all register spans to `[0, 255]` (`MODBUS_REGISTER_OOB`) |
+| **`CVE-2026-21888` (MQTT 5-Byte Varint Overflow)** | Malformed 5th continuation byte (`digit & 0x80 != 0` at byte 4) or non-minimal overlong varint (`0x80 0x00`) | Rejects with `MQTT_VARINT_OVERFLOW` or `MQTT_OVERLONG_VARINT` inside a bounded 4-iteration loop (`0` recursion) |
+| **`CVE-2026-25627` (MQTT Length Mismatch & Topic Injection)** | `hdr_len + rem_len != len(raw)`, `QoS == 3`, or wildcard/NUL injection (`+`, `#`, `\x00`) in PUBLISH topic | Rejects with `MQTT_PACKET_LEN_MISMATCH`, `MQTT_INVALID_FLAGS`, `MQTT_TOPIC_OOB`, or `MQTT_INVALID_TOPIC` |
+| **Stale Replay, Flood & Fault Cascades** | Out-of-order `seq_no <= last_seq_no`, packet burst `>= max_requests_per_window`, or repeated protocol/interlock violations | Enforces Kleppmann monotonic fencing (`REPLAY_ATTACK_BLOCKED`), sliding-window rate limiting (`RATE_LIMIT_EXCEEDED`), and Nygard 3-state circuit breaker (`CIRCUIT_BREAKER_OPEN`) |
+| **OWASP 2026 `CWE-1236` Spreadsheet Formula Injection** | Malicious string prefixes (`=`, `+`, `-`, `@`, `BIT_OR`, `%`, `\t`, `\r`, `\n`) or Unicode NFKC fullwidth `＝` (`U+FF1D`) bypasses | `neutralize_formula_cell()` checks raw and `NFKC`-normalized `.lstrip()` strings, prepends `'`, and locks `cell.data_type = "s"` |
 
 ---
 
@@ -89,17 +100,17 @@ pytest -v
 
 ## 4. Automated Architecture Fitness Functions (`FF-1`–`FF-9`)
 
-| Gate ID | Invariant Verified | Target Metric |
+| Gate ID | Fitness Function | Mechanical Verification Rule (`tests/test_architecture_fitness.py`) |
 | :--- | :--- | :--- |
-| **`FF-1`** | Acyclic Layer Dependency Graph (`ast` import scanner) | `0` upward/forbidden imports |
-| **`FF-2`** | Zero Floating-Point & Zero True Division (`float`, `Decimal`, `ast.Div`) | `0` occurrences in `src/` & `tests/` |
-| **`FF-3`** | Function Length (`<= 60` LOC) & Assertion Density (`>= 2` `assert`s/fn) | `100%` of functions in `src/vectragate/` |
-| **`FF-4`** | C++17/20 Native Compilation (`-Werror`), `static_assert(sizeof == 64)` & Zero Post-Init Heap | `0` warnings / `0` post-init `new`/`malloc` |
-| **`FF-5`** | 3-Way Cross-Validation (`1,000` random + `50` adversarial seeds: Python == C++ == `_oracle.py`) | `1,050 / 1,050` exact bit-level matches |
-| **`FF-6`** | Cryptographic Hash-Chain Tamper Detection (`1,000` random bit/field mutations) | `1,000 / 1,000` tamper detections |
-| **`FF-7`** | Multi-Sheet `.xlsx` Live `=SUM(...)` Formula & DuckDB 2.0 `BIGINT` Parity | `data_type == 'f'` & `0` `None` cells |
-| **`FF-8`** | Zero-Dollar Markdown/SVG Gate, SVG Box Disjointness & Exact File LOC Parity | `0` raw dollar chars & `100%` LOC match |
-| **`FF-9`** | Static Quality Gate (`ruff check src tests` & `ty check src`) | Exit code `0` (`0` diagnostics) |
+| **`FF-1`** | **Acyclic Layered Import DAG** | AST scan of `src/vectragate/*.py` proving strict upward dependency layering (`models <- {protocol, dag_engine} <- firewall <- {intake_gate, cpp_bridge, exporters} <- cli_visualizer`) with `0` cycles and strict per-module allowed-imports sets. |
+| **`FF-2`** | **Zero-Float & Zero-Division Gate** | AST scan across `src/vectragate/` and `tests/` banning `float` literals, `float()`, `Decimal`, `ast.Div` (`/`), and floating-point imports (`R0.1`). |
+| **`FF-3`** | **Bounded Functions, Assertions & Zero-Recursion** | AST scan enforcing `<= 60` LOC per function (`NASA Rule 4`), `>= 2` `assert` statements per function (`NASA Rule 5`), `0` direct/indirect recursion (`NASA Rule 1`), and `0` `open`/`eval`/`exec`/`pickle` in `src/vectragate/`. |
+| **`FF-4`** | **Immutable Value Objects Gate** | AST + runtime check that all `8` domain dataclasses in `models.py` declare `@dataclass(slots=True, frozen=True)`. |
+| **`FF-5`** | **Oracle Independence Gate** | AST scan proving `tests/_oracle.py` has `0` imports from `src/` or `vectragate`. |
+| **`FF-6`** | **`CWE-1236` & Live Excel Formula Gate** | Verifies NFKC + whitespace + 9-trigger payloads (`=CMD...`, `＝SUM(1)`, ` +1+1`, `BIT_OR calc`, `%0A`) are prefixed with `'` (`data_type == "s"`) while all 4 sheets preserve live `=SUM(...)` formulas (`0` `None` cells) and `.tmp_` atomic persistence. |
+| **`FF-7`** | **C++17/20 Arena & Zero-Heap Source Gate** | Scans `src/cpp/vectragate_core.hpp` for `alignas(64)`, `static_assert`, `SpscRingBuffer`, multi-block `blake2b_64`, and `0` dynamic allocation calls (`new`, `delete`, `malloc`, `free`, `calloc`, `realloc`). |
+| **`FF-8`** | **Zero-Dollar Docs, SVG Geometry & LOC Gate** | Verifies `0` raw dollar chars across all `.md`/`.svg` files, XML well-formedness & disjoint SVG box geometry in `assets/`, and `100%` exact file LOC parity in `README.md`. |
+| **`FF-9`** | **C++17/20 Native Compilation & `1,050`-Seed Parity** | Compiles `src/cpp/vectragate_cli.cpp` with `g++ -std=c++17 -O3 -Wall -Wextra -Wpedantic -Werror`, runs `ruff check` & `ty check`, and verifies `100%` bit-for-bit parity across `50` fast + `1,000` deep seeds (`1,050` total instances) for `C++ Binary == Python Core == Independent _oracle.py`. |
 
 ---
 
@@ -110,20 +121,20 @@ pytest -v
 | `BLUEPRINT.md` | 186 | Mathematical, Silicon & Protocol Blueprint |
 | `SPEC.md` | 222 | Normative System & Protocol Specification |
 | `ADR.md` | 87 | Architecture Decision Records (`ADR-001`–`ADR-005`) |
-| `HANDOFF.md` | 57 | Multi-Agent Execution & Gate 6 Tracker |
-| `README.md` | 134 | Project Documentation & Architecture Guide |
+| `HANDOFF.md` | 58 | Multi-Agent Execution & Gate 6 Tracker |
+| `README.md` | 145 | Project Documentation & Architecture Guide |
 | `pyproject.toml` | 35 | Hatchling Build, Pytest, Ruff & Ty Configuration |
 | `src/cpp/vectragate_core.hpp` | 1083 | Header-Only C++17/20 `alignas(64)` Engine & BLAKE2b-64 |
 | `src/cpp/vectragate_cli.cpp` | 303 | Native C++17/20 CLI Executable Entrypoint |
 | `src/vectragate/__init__.py` | 108 | Public Package Facade |
 | `src/vectragate/models.py` | 443 | Layer 1 Immutable Domain Dataclasses & Enums |
-| `src/vectragate/protocol.py` | 210 | Layer 2B Modbus TCP & MQTT v3.1.1/v5.0 Decoders |
+| `src/vectragate/protocol.py` | 210 | Layer 2B Modbus TCP & MQTT v3.1.1 Wire Decoders |
 | `src/vectragate/dag_engine.py` | 135 | Layer 2B Kahn Topological Sort & Bitwise DAG Engine |
 | `src/vectragate/firewall.py` | 277 | Layer 2B Stateful Firewall, Breaker & BLAKE2b-64 Chain |
-| `src/vectragate/intake_gate.py` | 404 | Layer 3 Pre-Engine Validation Gate & Dead-Letter I/O |
+| `src/vectragate/intake_gate.py` | 404 | Layer 3 4-Stage JSON Boundary Gate & Quarantine |
 | `src/vectragate/cpp_bridge.py` | 225 | Layer 3 Native C++17/20 Subprocess Bridge |
-| `src/vectragate/exporters.py` | 386 | Layer 4 DuckDB 2.0 SIEM, Excel `.xlsx` & SQLite Exporters |
-| `src/vectragate/cli_visualizer.py` | 224 | Layer 4 Rich Terminal Visualizer & CLI Runner |
+| `src/vectragate/exporters.py` | 386 | Layer 4 DuckDB 2.0 SIEM & CWE-1236 Excel `.xlsx` Exporter |
+| `src/vectragate/cli_visualizer.py` | 224 | Layer 4 Pure-Stdlib Unicode/ASCII SIEM CLI Runner |
 | `tests/_oracle.py` | 625 | Zero-Dependency Independent Verification Oracle |
 | `tests/test_protocol_decoders.py` | 282 | Protocol Wire Decoder Unit Tests |
 | `tests/test_dag_and_firewall.py` | 389 | DAG Engine, Breaker, Rate-Limiter & Hash-Chain Tests |
