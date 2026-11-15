@@ -1,1 +1,2 @@
-*.py linguist-vendored=true
+* text=auto eol=lf
+*.py linguist-vendored=true linguist-detectable=false
