@@ -1,4 +1,1 @@
-tests/* linguist-vendored
-tests/**/* linguist-vendored
-src/vectragate/* linguist-vendored
-src/vectragate/**/* linguist-vendored
+*.py linguist-vendored=true
