@@ -122,7 +122,7 @@ pytest -v
 | `SPEC.md` | 222 | Normative System & Protocol Specification |
 | `ADR.md` | 87 | Architecture Decision Records (`ADR-001`–`ADR-005`) |
 | `HANDOFF.md` | 58 | Multi-Agent Execution & Gate 6 Tracker |
-| `README.md` | 145 | Project Documentation & Architecture Guide |
+| `README.md` | 189 | Project Documentation & Architecture Guide |
 | `pyproject.toml` | 35 | Hatchling Build, Pytest, Ruff & Ty Configuration |
 | `src/cpp/vectragate_core.hpp` | 1083 | Header-Only C++17/20 `alignas(64)` Engine & BLAKE2b-64 |
 | `src/cpp/vectragate_cli.cpp` | 303 | Native C++17/20 CLI Executable Entrypoint |
@@ -143,3 +143,47 @@ pytest -v
 | `tests/test_architecture_fitness.py` | 471 | `FF-1`–`FF-9` Fitness Suite & 1,050-Seed Oracle Parity |
 | `assets/architecture_pipeline.svg` | 111 | 4-Layer Architecture & 64-Byte Cache-Line Diagram |
 | `assets/protocol_dag_interlock.svg` | 132 | Protocol Frame, DAG Interlock & Circuit Breaker Diagram |
+
+---
+
+## 6. Python API, Native C++17/20 Bridge & DuckDB 2.0 / `.xlsx` Integration
+
+```python
+from pathlib import Path
+from vectragate import (
+    build_demo_scenario,
+    evaluate_packet_stream,
+    export_xlsx_atomic,
+    query_duckdb_siem_summary,
+    run_cpp_engine,
+    verify_verdict_chain,
+)
+
+# 1. Load the 14-packet industrial boiler & gas-valve OT/ICS scenario
+packets, dag_nodes, init_regs, policy = build_demo_scenario()
+
+# 2. Evaluate through the pure-integer Python Functional Core & verify BLAKE2b-64 chain
+py_result = evaluate_packet_stream(packets, dag_nodes, initial_registers=init_regs, policy=policy)
+assert verify_verdict_chain(py_result.verdicts) is True
+assert py_result.final_chain_hash_u64 == 0x8EBB59E8DCE5CCC2
+
+# 3. Execute the native C++17/20 binary (vectragate_cli.exe) & assert 100% bit-for-bit parity
+cpp_result = run_cpp_engine(packets, dag_nodes, initial_registers=init_regs, policy=policy)
+assert cpp_result == py_result
+
+# 4. Query in-memory DuckDB 2.0 BIGINT SIEM analytical views & export atomic CWE-1236 .xlsx
+siem_summary = query_duckdb_siem_summary(py_result)
+assert siem_summary["total_packets"] == 14 and siem_summary["interlock_trips"] == 1
+export_xlsx_atomic(py_result, Path("vectragate_demo_report.xlsx"))
+```
+
+---
+
+## 7. Architecture Documentation & License
+
+- **Mathematical & Silicon Blueprint:** [`BLUEPRINT.md`](BLUEPRINT.md)
+- **Normative Module & Wire Specification:** [`SPEC.md`](SPEC.md)
+- **Architecture Decision Records (`ADR-001`–`ADR-006`):** [`ADR.md`](ADR.md)
+- **Multi-Model Verification Ledger:** [`HANDOFF.md`](HANDOFF.md)
+
+Released under the **MIT License** (see [`LICENSE`](LICENSE)). Copyright (c) 2026 **Saeed Ali** (`@Eng-Saeed-Ali`).

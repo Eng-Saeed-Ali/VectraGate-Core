@@ -40,7 +40,7 @@
 ## 3. Verified Repository Inventory & Line Counts
 
 - **Specification & Governance (`6` files):**
-  - `BLUEPRINT.md` (`186` LOC), `SPEC.md` (`222` LOC), `ADR.md` (`87` LOC), `HANDOFF.md` (`58` LOC), `README.md` (`145` LOC), `pyproject.toml` (`35` LOC).
+  - `BLUEPRINT.md` (`186` LOC), `SPEC.md` (`222` LOC), `ADR.md` (`87` LOC), `HANDOFF.md` (`58` LOC), `README.md` (`189` LOC), `pyproject.toml` (`35` LOC).
 - **Native C++17/20 Core (`2` files):**
   - `src/cpp/vectragate_core.hpp` (`1083` LOC), `src/cpp/vectragate_cli.cpp` (`303` LOC).
 - **Python 3.12+ Core Package (`9` files):**
