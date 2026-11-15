@@ -1,0 +1,28 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pytest ruff ty duckdb openpyxl
+      - name: Install package
+        run: python -m pip install -e . --no-build-isolation --no-deps
+      - name: Compile C++17/20 Native Core & Run SPSC Self-Test
+        run: |
+          g++ -std=c++17 -O3 -Wall -Wextra -Wpedantic -Werror src/cpp/vectragate_cli.cpp -o vectragate_cli.exe
+          ./vectragate_cli.exe --selftest-spsc
+      - name: Static Quality Gates (Ruff & Ty)
+        run: |
+          ruff check src tests
+          ty check src
+      - name: Run 104-Test Suite & 1,050-Seed 3-Way Parity
+        run: pytest -v
