@@ -6,7 +6,7 @@
 #include <sstream>
 #include <string>
 
-namespace {
+namespace { // VectraGate-Core C++17/20 native CLI
 
 vectragate::EngineArena g_arena;
 
